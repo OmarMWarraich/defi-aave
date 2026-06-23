@@ -91,7 +91,7 @@ Pick one and delete the Truffle stack (`truffle-config.js`, `migrations/`, `.bab
   - Dropped `web3` dep and the `vite-plugin-node-polyfills` shim (viem is browser-native). Verified: no web3/`.enable()`/`.methods.` left in `src/`; type-checks, builds (now code-split), dev server HTTP 200.
 - [x] Replace ad-hoc `fromWei`/`toWei` string math with viem's `formatUnits`/`parseUnits` — done as part of the wagmi rewrite (DAI 18-dec, oracle price 8-dec, `formatEther` for ETH). No `fromWei`/`toWei` remain.
 - [x] Move the borrow-amount calculation out of float JS; rely on the on-chain safe value — UI passes user-entered ETH/DAI via `parseEther`/`parseUnits`; the contract validates against `maxSafeBorrowDAI` (displayed as a hint). No browser float borrow math.
-- [ ] Replace `bootstrap`/`react-bootstrap` beta with Tailwind and remove the other deps.
+- [x] Replace `bootstrap`/`react-bootstrap` beta with **Tailwind** and remove the other deps. Tailwind v4 via `@tailwindcss/vite` plugin + `src/index.css` (`@import "tailwindcss"`); `App.tsx` Bootstrap classes → Tailwind utilities; dropped `bootstrap` dep + its CSS import + empty `App.css` (`react-bootstrap` was removed earlier). Renamed `vite.config.ts`→`vite.config.mts` so the ESM-only Tailwind plugin loads under the CommonJS `package.json` (kept CJS for Hardhat). Verified: no bootstrap refs left, type-checks, build emits real Tailwind utilities (38 KB CSS), dev server HTTP 200.
 - [ ] Remove the legacy `serviceWorker.js` (CRA artifact) unless PWA support is actually wanted.
 - [ ] Consume TypeChain/typed ABIs instead of importing raw JSON from `src/abis/`.
 - [ ] Add error/loading states and basic input validation.

@@ -10,7 +10,6 @@ import {
 import { erc20Abi, formatEther, formatUnits, parseEther, parseUnits } from "viem";
 import { aaveDeFiAbi } from "../contracts/aaveDeFi";
 import { AAVEDEFI_ADDRESS, AWETH_ADDRESS, DAI_ADDRESS } from "../contracts/addresses";
-import "./App.css";
 
 const dai = (v: bigint | undefined) => (v === undefined ? "0" : formatUnits(v, 18));
 
@@ -72,119 +71,118 @@ function App() {
     });
   };
 
+  const inputClass =
+    "rounded border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none";
+  const thClass = "border-b px-4 py-2 text-left font-semibold text-gray-600";
+  const tdClass = "px-4 py-2 font-mono";
+
   return (
-    <div>
-      <nav className="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow justify-content-between px-3">
-        <span className="navbar-brand mr-0">Aave DeFi</span>
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <nav className="fixed inset-x-0 top-0 z-10 flex items-center justify-between bg-gray-900 px-4 py-3 text-white shadow">
+        <span className="text-lg font-semibold">Aave DeFi</span>
         <ConnectButton />
       </nav>
-      <div className="container-fluid mt-5">
-        <div className="row">
-          <main role="main" className="col-lg-12 d-flex text-center">
-            <div className="content mt-5 mr-auto ml-auto">
-              <h1>Aave DeFi DApp</h1>
-              <p>Deposit ETH as collateral on Aave v3 and borrow DAI against it.</p>
 
-              {!isConnected ? (
-                <p className="mt-5">Connect your wallet to get started.</p>
-              ) : (
-                <>
-                  <div className="mt-4">
-                    <div className="form-group">
-                      <label>
-                        ETH to deposit:&nbsp;
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={ethInput}
-                          placeholder="1.0"
-                          onChange={(e) => setEthInput(e.target.value)}
-                        />
-                      </label>
-                    </div>
-                    <div className="form-group">
-                      <label>
-                        DAI to borrow:&nbsp;
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={daiInput}
-                          placeholder="0"
-                          onChange={(e) => setDaiInput(e.target.value)}
-                        />
-                      </label>
-                    </div>
-                    <button
-                      className="btn btn-primary btn-lg"
-                      onClick={onDepositBorrow}
-                      disabled={loading || !ethInput}
-                    >
-                      {loading ? "Processing…" : "Deposit & Borrow"}
-                    </button>
-                    <p className="mt-2">
-                      <small>
-                        Max safe DAI borrow (on-chain): {dai(maxSafeBorrow)}
-                      </small>
-                    </p>
-                    {error && (
-                      <p className="text-danger mt-2">
-                        <small>{(error as { shortMessage?: string }).shortMessage ?? error.message}</small>
-                      </p>
-                    )}
-                  </div>
+      <main className="mx-auto max-w-3xl px-4 pt-24 pb-12 text-center">
+        <h1 className="text-3xl font-bold">Aave DeFi DApp</h1>
+        <p className="mt-2 text-gray-600">
+          Deposit ETH as collateral on Aave v3 and borrow DAI against it.
+        </p>
 
-                  <p className="mt-5">Wallet balances</p>
-                  <div className="row justify-content-center">
-                    <div className="col-auto">
-                      <table className="table table-responsive m-auto">
-                        <thead>
-                          <tr>
-                            <th scope="col">ETH Balance</th>
-                            <th scope="col">DAI Balance</th>
-                            <th scope="col">aWETH (AaveDeFi contract)</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td>{ethBalance ? formatEther(ethBalance.value) : "0"}</td>
-                            <td>{dai(daiBalance)}</td>
-                            <td>{dai(aWethBalance)}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  <hr />
-                  <p className="mt-5">Your totals on the AaveDeFi contract</p>
-                  <div className="row justify-content-center">
-                    <div className="col-auto">
-                      <table className="table table-responsive m-auto">
-                        <thead>
-                          <tr>
-                            <th scope="col">Total ETH Deposits</th>
-                            <th scope="col">Total DAI Borrows</th>
-                            <th scope="col">DAI price (USD)</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td>{totalETHDeposits ? formatEther(totalETHDeposits) : "0"}</td>
-                            <td>{dai(totalDAIBorrows)}</td>
-                            <td>
-                              {daiPrice ? formatUnits(daiPrice, 8) : "0"}
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </>
+        {!isConnected ? (
+          <p className="mt-10 text-gray-600">Connect your wallet to get started.</p>
+        ) : (
+          <>
+            <div className="mx-auto mt-8 flex max-w-md flex-col gap-4 rounded-lg bg-white p-6 shadow">
+              <label className="flex items-center justify-between gap-3">
+                <span>ETH to deposit</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={ethInput}
+                  placeholder="1.0"
+                  onChange={(e) => setEthInput(e.target.value)}
+                  className={inputClass}
+                />
+              </label>
+              <label className="flex items-center justify-between gap-3">
+                <span>DAI to borrow</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={daiInput}
+                  placeholder="0"
+                  onChange={(e) => setDaiInput(e.target.value)}
+                  className={inputClass}
+                />
+              </label>
+              <button
+                onClick={onDepositBorrow}
+                disabled={loading || !ethInput}
+                className="rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? "Processing…" : "Deposit & Borrow"}
+              </button>
+              <p className="text-sm text-gray-500">
+                Max safe DAI borrow (on-chain): {dai(maxSafeBorrow)}
+              </p>
+              {error && (
+                <p className="text-sm text-red-600">
+                  {(error as { shortMessage?: string }).shortMessage ?? error.message}
+                </p>
               )}
             </div>
-          </main>
-        </div>
-      </div>
+
+            <section className="mt-10">
+              <h2 className="mb-3 text-lg font-medium">Wallet balances</h2>
+              <div className="mx-auto inline-block overflow-hidden rounded-lg bg-white shadow">
+                <table className="text-sm">
+                  <thead>
+                    <tr>
+                      <th className={thClass}>ETH Balance</th>
+                      <th className={thClass}>DAI Balance</th>
+                      <th className={thClass}>aWETH (AaveDeFi contract)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className={tdClass}>
+                        {ethBalance ? formatEther(ethBalance.value) : "0"}
+                      </td>
+                      <td className={tdClass}>{dai(daiBalance)}</td>
+                      <td className={tdClass}>{dai(aWethBalance)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className="mt-10">
+              <h2 className="mb-3 text-lg font-medium">Your totals on the AaveDeFi contract</h2>
+              <div className="mx-auto inline-block overflow-hidden rounded-lg bg-white shadow">
+                <table className="text-sm">
+                  <thead>
+                    <tr>
+                      <th className={thClass}>Total ETH Deposits</th>
+                      <th className={thClass}>Total DAI Borrows</th>
+                      <th className={thClass}>DAI price (USD)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className={tdClass}>
+                        {totalETHDeposits ? formatEther(totalETHDeposits) : "0"}
+                      </td>
+                      <td className={tdClass}>{dai(totalDAIBorrows)}</td>
+                      <td className={tdClass}>{daiPrice ? formatUnits(daiPrice, 8) : "0"}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </>
+        )}
+      </main>
     </div>
   );
 }
