@@ -31,7 +31,7 @@ dependencies, and documentation. The stack as-is is almost entirely end-of-life.
 ## Phase 0 — Repo hygiene & baseline
 
 - [x] `git init` (project is not currently a git repo) and commit the legacy code as the baseline.
-- [ ] Remove the committed `package-lock.json` only after the new toolchain is chosen, then regenerate.
+- [x] Remove the committed `package-lock.json` only after the new toolchain is chosen, then regenerate. (Regenerated during the Hardhat install.)
 - [x] Add `.env` + `.env.example` for RPC URLs and keys; ensure `.gitignore` covers `.env`, `cache/`, `artifacts/`, `typechain-types/`, `out/`, `coverage/`.
 - [x] Confirm a license file exists (README says MIT) and add `LICENSE`.
 
@@ -41,7 +41,7 @@ Pick one and delete the Truffle stack (`truffle-config.js`, `migrations/`, `.bab
 
 - [x] **Decision: Hardhat** (continuity with the JS frontend; Foundry can be added later as a fork-test add-on).
 - [x] Delete the Truffle stack: removed `truffle-config.js`, `migrations/`, `.babelrc`, `babel-*` deps, `truffle` dep, and the Truffle-only `Migrations.sol`/`Migrations.json` bookkeeping artifacts.
-- [ ] Initialize Hardhat with `hardhat-toolbox` (ethers v6, chai matchers, gas reporter, coverage, verify).
+- [x] Initialize Hardhat with `hardhat-toolbox` (ethers v6, chai matchers, gas reporter, coverage, verify). Added `hardhat.config.ts` (TS), `tsconfig.json`, deps + `compile`/`test:contracts`/`coverage` scripts. `npx hardhat compile` succeeds (solc 0.8.24).
 - [ ] Move contracts to a standard `contracts/` dir; configure compiler to a pinned recent `0.8.2x` with optimizer settings.
 - [ ] Replace Ganache mainnet-fork workflow with **Hardhat Network forking** (`forking.url` from `.env`, pin a `blockNumber` for deterministic tests).
 - [ ] Add deployment scripts (`hardhat-deploy` or `scripts/deploy.ts`) replacing `migrations/`.
