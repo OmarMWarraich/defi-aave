@@ -45,25 +45,32 @@ Pick one and delete the Truffle stack (`truffle-config.js`, `migrations/`, `.bab
 - [x] Move contracts to a standard `contracts/` dir; configure compiler to a pinned recent `0.8.2x` with optimizer settings. (Moved all 5 `.sol` files; removed the `paths.sources` override; solc pinned to `0.8.24` + optimizer. Recompiles clean.)
 - [x] Replace Ganache mainnet-fork workflow with **Hardhat Network forking** (`forking.url` from `.env`, pin a `blockNumber` for deterministic tests). `hardhat` network forks from `MAINNET_RPC_URL`, pins `FORK_BLOCK_NUMBER` (defaults to `19_000_000`); falls back to a non-forked node when no RPC is set (CI without secrets). Needs a real `MAINNET_RPC_URL` to exercise.
 - [x] Add deployment scripts (`hardhat-deploy` or `scripts/deploy.ts`) replacing `migrations/`. `scripts/deploy.ts` (ethers v6) deploys `AaveDeFi` + auto-verifies on public networks. Smoke-tested: wiring works; deploy reverts in the constructor on a non-forked node (hardcoded mainnet addresses have no code) — works on a fork / once Phase 2 injects addresses.
-- [ ] Generate TypeChain typings for the frontend to consume.
+- [x] Generate TypeChain typings for the frontend to consume. `hardhat-toolbox` runs TypeChain on every compile → `typechain-types/` (ethers-v6). Frontend *consuming* them is the Phase 4 task.
 
 ## Phase 2 — Smart contract refactor (Aave v2 → v3)
 
-- [ ] Upgrade `@openzeppelin/contracts` to **v5.x**; update imports (`IERC20` path unchanged, but review breaking changes).
-- [ ] Migrate from Aave v2 interfaces to **Aave v3** (`@aave/core-v3`):
-  - `ILendingPoolAddressesProvider` → `IPoolAddressesProvider`
-  - `ILendingPool` → `IPool` (`getPool()` instead of `getLendingPool()`)
-  - `IWETHGateway` → v3 `WrappedTokenGatewayV3`
-  - `IPriceOracle` → v3 `IAaveOracle` (**note: v3 oracle returns USD-denominated, 8 decimals**, not ETH-denominated like v2 — the borrow math changes).
-- [ ] Stop hardcoding mainnet addresses in the constructor; inject them via constructor args / config so the contract is testable on forks and deployable to testnets (Sepolia) and L2s.
-- [ ] **Add the missing lifecycle functions:** `repayDAI`, `withdrawETH` (and event emission) so collateral isn't stranded.
-- [ ] Security fixes:
-  - [ ] Use `SafeERC20` (`safeTransfer`) instead of raw `transfer`.
-  - [ ] Add `ReentrancyGuard` to state-changing external functions.
-  - [ ] Add access control (`Ownable`/role) where appropriate.
-  - [ ] Replace misused `assert` with `require` + descriptive errors / custom errors.
-  - [ ] Validate `safeMaxDAIBorrow` on-chain (don't trust a browser-computed number) or compute the safe amount in-contract using the oracle + LTV from `getUserAccountData`.
-- [ ] Add NatSpec to all public/external functions.
+- [x] Upgrade `@openzeppelin/contracts` to **v5.x** (installed 5.6.1). Now using `SafeERC20`, `ReentrancyGuard`, `Ownable(msg.sender)`, `IERC20Metadata`.
+- [x] Migrate from Aave v2 interfaces to **Aave v3** (slim local interfaces under `contracts/interfaces/`, instead of pulling the heavy `@aave/core-v3` + `@aave/periphery-v3` packages — see note below):
+  - `ILendingPoolAddressesProvider` → `IPoolAddressesProvider` (`getPool()` / `getPriceOracle()`)
+  - `ILendingPool` → `IPool` (`supply`/`withdraw`/`borrow`/`repay`; `getUserAccountData` now USD-based)
+  - `IWETHGateway` → `IWrappedTokenGatewayV3` (`depositETH`/`withdrawETH`)
+  - `IPriceOracle` → `IAaveOracle` (USD, 8 decimals; borrow math updated accordingly)
+- [x] Stop hardcoding mainnet addresses in the constructor; inject them via constructor args. Addresses now live (per-network) in `scripts/deploy.ts`.
+- [x] **Add the missing lifecycle functions:** `repayDAI`, `withdrawETH` (with events) so collateral isn't stranded.
+- [x] Security fixes:
+  - [x] Use `SafeERC20` (`safeTransfer`/`safeTransferFrom`/`forceApprove`) instead of raw `transfer`.
+  - [x] Add `ReentrancyGuard` (`nonReentrant`) to all state-changing external functions.
+  - [x] Add access control (`Ownable`) — `setSafetyFactor`, `rescueERC20`.
+  - [x] Replace misused `assert` with custom errors (`ZeroAmount`, `OraclePriceZero`, `BorrowExceedsSafeMax`, `InsufficientDeposit`, `InvalidSafetyFactor`).
+  - [x] Validate borrow on-chain: `_maxSafeBorrowDAI` derives the cap from `getUserAccountData` + oracle price × `safetyFactorBps`; reverts if the request exceeds it.
+- [x] Add NatSpec to all public/external functions.
+
+> **Phase 2 notes / follow-ups:**
+> - Used **slim local v3 interfaces** rather than the official `@aave/*` packages (those pin `0.8.10` and pull large import trees). Trade-off: fewer deps & a clean 0.8.24 build vs. not tracking upstream interface changes automatically.
+> - **API renames** (frontend Phase 4 + tests Phase 3 must follow): `borrowDAIAgainstETH` → `depositETHAndBorrowDAI`; `daiEthprice` (storage) → `daiPriceUSD()` (view); added `repayDAI`, `withdrawETH`, `maxSafeBorrowDAI`.
+> - **Architectural limitation retained:** all users share one Aave position (`address(this)`); documented in the contract. Per-user vaults are out of scope.
+> - **Deploy addresses** in `scripts/deploy.ts` (gateway/aWETH especially) are flagged to verify against the official Aave address book before any real deployment.
+> - Compiles clean (`0.8.24`). Real behavior is only verifiable on a mainnet fork (needs `MAINNET_RPC_URL`) — covered by Phase 3 tests.
 
 ## Phase 3 — Test suite
 
@@ -115,9 +122,28 @@ Pick one and delete the Truffle stack (`truffle-config.js`, `migrations/`, `.bab
 `Phase 0 → 1 → 2 → 3` (get contracts modern, tested, and green on a fork first),
 then `4 → 5 → 6` (frontend, CI, docs). Phases 5 and 6 can run alongside 4.
 
+## Deferred / out-of-scope (future work)
+
+- **Aave interface strategy — _decided: stick with slim local interfaces for now._**
+  Phase 2 defines minimal v3 interfaces under `contracts/interfaces/` rather than depending on
+  the official `@aave/core-v3` + `@aave/periphery-v3` packages. This keeps a clean single-compiler
+  (`0.8.24`) build and a small dependency tree.
+  - _Trade-off:_ we don't automatically track upstream Aave interface changes; if a signature
+    drifts, our local copy must be updated by hand.
+  - _Future option (out of scope):_ migrate to the official `@aave/*` packages (or their address-book
+    helpers) for canonical interfaces and addresses. Revisit only if integrating more of the protocol
+    surface or if upstream drift becomes a maintenance burden.
+- **Per-user vault architecture (out of scope).** The contract intentionally keeps the original
+  single shared Aave position (`address(this)`) with off-protocol per-user accounting. A safe
+  multi-user design would isolate each user's collateral/debt (e.g. per-user proxy/vault or credit
+  delegation). Documented inline in `AaveDeFi.sol`; tracked here as future work.
+- **API renames & deploy-address verification** from the Phase 2 rewrite are recorded in the
+  "Phase 2 notes / follow-ups" block above (frontend/tests must follow the renames; gateway/aWETH
+  addresses must be verified against the Aave address book before any real deployment).
+
 ## Open decisions (resolve before starting)
 
-1. **Hardhat vs Foundry** (recommend Hardhat + optional Foundry fork tests).
+1. ~~**Hardhat vs Foundry**~~ — **decided: Hardhat** (Foundry fork tests remain an optional add-on).
 2. **viem/wagmi vs ethers-only** frontend (recommend wagmi + viem + RainbowKit).
 3. **Target network**: keep mainnet-fork-only, or add Sepolia/L2 deployment?
 4. **Styling**: Bootstrap 5 vs Tailwind.
