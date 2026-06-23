@@ -5,20 +5,20 @@ dependencies, and documentation. The stack as-is is almost entirely end-of-life.
 
 ## Current state (audit)
 
-| Area | Current | Status |
-|------|---------|--------|
-| Protocol | Aave **v2** (hardcoded mainnet addresses) | v2 deprecated; v3 is current, v4 in progress |
-| Smart-contract framework | Truffle ^5.3.6 + Ganache | **Sunset by Consensys (Sept 2023)** |
-| Solidity | ^0.8.4 | Old; current is 0.8.2x |
-| Contract libs | @openzeppelin/contracts ^4.1.0 | v5.x is current |
-| Web3 lib | web3.js ^1.3.6 | 1.x EOL; v4 exists, ecosystem moved to viem/ethers |
-| Frontend | React 16.8 **class components** + CRA (react-scripts ^2.1.8) | **CRA deprecated**; react-scripts 2 is ancient |
-| Build/transpile | babel-register + babel-preset-es2015/stage-2/stage-3 | Long-deprecated presets |
-| Wallet connect | `window.ethereum.enable()` + `componentWillMount` | Both deprecated APIs |
-| Styling | bootstrap 4.3.1 + react-bootstrap 1.0.0-beta.5 | Outdated; beta dep |
-| Node | 14.15.4 (per README) | EOL; target 20 LTS / 22 |
-| Testing | Truffle + chai against a live mainnet fork | Brittle, no CI |
-| Tooling | No linter/formatter/CI/.env handling | Missing |
+| Area                     | Current                                                      | Status                                             |
+| ------------------------ | ------------------------------------------------------------ | -------------------------------------------------- |
+| Protocol                 | Aave **v2** (hardcoded mainnet addresses)                    | v2 deprecated; v3 is current, v4 in progress       |
+| Smart-contract framework | Truffle ^5.3.6 + Ganache                                     | **Sunset by Consensys (Sept 2023)**                |
+| Solidity                 | ^0.8.4                                                       | Old; current is 0.8.2x                             |
+| Contract libs            | @openzeppelin/contracts ^4.1.0                               | v5.x is current                                    |
+| Web3 lib                 | web3.js ^1.3.6                                               | 1.x EOL; v4 exists, ecosystem moved to viem/ethers |
+| Frontend                 | React 16.8 **class components** + CRA (react-scripts ^2.1.8) | **CRA deprecated**; react-scripts 2 is ancient     |
+| Build/transpile          | babel-register + babel-preset-es2015/stage-2/stage-3         | Long-deprecated presets                            |
+| Wallet connect           | `window.ethereum.enable()` + `componentWillMount`            | Both deprecated APIs                               |
+| Styling                  | bootstrap 4.3.1 + react-bootstrap 1.0.0-beta.5               | Outdated; beta dep                                 |
+| Node                     | 14.15.4 (per README)                                         | EOL; target 20 LTS / 22                            |
+| Testing                  | Truffle + chai against a live mainnet fork                   | Brittle, no CI                                     |
+| Tooling                  | No linter/formatter/CI/.env handling                         | Missing                                            |
 
 > ⚠️ **Security note up front:** the contract deposits ETH and borrows DAI but has **no
 > withdraw/repay path** — collateral (aWETH) gets stranded in the contract. There is no
@@ -45,7 +45,7 @@ Pick one and delete the Truffle stack (`truffle-config.js`, `migrations/`, `.bab
 - [x] Move contracts to a standard `contracts/` dir; configure compiler to a pinned recent `0.8.2x` with optimizer settings. (Moved all 5 `.sol` files; removed the `paths.sources` override; solc pinned to `0.8.24` + optimizer. Recompiles clean.)
 - [x] Replace Ganache mainnet-fork workflow with **Hardhat Network forking** (`forking.url` from `.env`, pin a `blockNumber` for deterministic tests). `hardhat` network forks from `MAINNET_RPC_URL`, pins `FORK_BLOCK_NUMBER` (defaults to `19_000_000`); falls back to a non-forked node when no RPC is set (CI without secrets). Needs a real `MAINNET_RPC_URL` to exercise.
 - [x] Add deployment scripts (`hardhat-deploy` or `scripts/deploy.ts`) replacing `migrations/`. `scripts/deploy.ts` (ethers v6) deploys `AaveDeFi` + auto-verifies on public networks. Smoke-tested: wiring works; deploy reverts in the constructor on a non-forked node (hardcoded mainnet addresses have no code) — works on a fork / once Phase 2 injects addresses.
-- [x] Generate TypeChain typings for the frontend to consume. `hardhat-toolbox` runs TypeChain on every compile → `typechain-types/` (ethers-v6). Frontend *consuming* them is the Phase 4 task.
+- [x] Generate TypeChain typings for the frontend to consume. `hardhat-toolbox` runs TypeChain on every compile → `typechain-types/` (ethers-v6). Frontend _consuming_ them is the Phase 4 task.
 
 ## Phase 2 — Smart contract refactor (Aave v2 → v3)
 
@@ -66,6 +66,7 @@ Pick one and delete the Truffle stack (`truffle-config.js`, `migrations/`, `.bab
 - [x] Add NatSpec to all public/external functions.
 
 > **Phase 2 notes / follow-ups:**
+>
 > - Used **slim local v3 interfaces** rather than the official `@aave/*` packages (those pin `0.8.10` and pull large import trees). Trade-off: fewer deps & a clean 0.8.24 build vs. not tracking upstream interface changes automatically.
 > - **API renames** (frontend Phase 4 + tests Phase 3 must follow): `borrowDAIAgainstETH` → `depositETHAndBorrowDAI`; `daiEthprice` (storage) → `daiPriceUSD()` (view); added `repayDAI`, `withdrawETH`, `maxSafeBorrowDAI`.
 > - **Architectural limitation retained:** all users share one Aave position (`address(this)`); documented in the contract. Per-user vaults are out of scope.
@@ -93,12 +94,12 @@ Pick one and delete the Truffle stack (`truffle-config.js`, `migrations/`, `.bab
 - [x] Move the borrow-amount calculation out of float JS; rely on the on-chain safe value — UI passes user-entered ETH/DAI via `parseEther`/`parseUnits`; the contract validates against `maxSafeBorrowDAI` (displayed as a hint). No browser float borrow math.
 - [x] Replace `bootstrap`/`react-bootstrap` beta with **Tailwind** and remove the other deps. Tailwind v4 via `@tailwindcss/vite` plugin + `src/index.css` (`@import "tailwindcss"`); `App.tsx` Bootstrap classes → Tailwind utilities; dropped `bootstrap` dep + its CSS import + empty `App.css` (`react-bootstrap` was removed earlier). Renamed `vite.config.ts`→`vite.config.mts` so the ESM-only Tailwind plugin loads under the CommonJS `package.json` (kept CJS for Hardhat). Verified: no bootstrap refs left, type-checks, build emits real Tailwind utilities (38 KB CSS), dev server HTTP 200.
 - [x] Remove the legacy `serviceWorker.js` (CRA artifact) unless PWA support is actually wanted. Deleted (no PWA needed; it was unimported).
-- [x] Consume TypeChain/typed ABIs instead of importing raw JSON from `src/abis/`. App uses a hand-written **typed `as const` ABI** (`src/contracts/aaveDeFi.ts`) — the idiomatic viem/wagmi form (TypeChain emits *ethers* types, not viem ABIs); could be auto-generated via `wagmi generate` later. Deleted the stale `src/abis/*.json` (v2 Truffle artifacts).
+- [x] Consume TypeChain/typed ABIs instead of importing raw JSON from `src/abis/`. App uses a hand-written **typed `as const` ABI** (`src/contracts/aaveDeFi.ts`) — the idiomatic viem/wagmi form (TypeChain emits _ethers_ types, not viem ABIs); could be auto-generated via `wagmi generate` later. Deleted the stale `src/abis/*.json` (v2 Truffle artifacts).
 - [x] Add error/loading states and basic input validation. Loading (`Processing…` + disabled button across `isPending`/`isConfirming`), tx error surfaced (`shortMessage`), and decimal/positive validation on the ETH/DAI inputs with inline hints + `aria-invalid`; submit gated on `canSubmit` so `parseEther`/`parseUnits` can't throw on bad input. Type-checks and builds clean.
 
 ## Phase 5 — Quality & CI
 
-- [ ] Add ESLint (flat config) + Prettier; add `solhint` + `prettier-plugin-solidity` for contracts.
+- [x] Add ESLint (flat config) + Prettier; add `solhint` + `prettier-plugin-solidity` for contracts. `eslint.config.mjs` (flat: TS/React-hooks for `src/`, Node/Mocha for Hardhat TS, `eslint-config-prettier` last); `.prettierrc.json` (+ `prettier-plugin-solidity`) + `.prettierignore`; `.solhint.json` (recommended, with deliberate naming rules relaxed). Scripts: `lint`/`lint:fix`/`lint:sol`/`format`/`format:check`. Whole repo formatted; all four pass clean. Fixed lint findings in the test (chai `properAddress`→`isAddress`, dropped an `as any`) — build/compile/test all still green.
 - [ ] Add a GitHub Actions workflow: install → lint → compile → test (with fork RPC secret) → coverage.
 - [ ] Add `npm` scripts: `dev`, `build`, `test`, `test:contracts`, `lint`, `format`, `deploy:sepolia`.
 - [ ] Run `npm audit` and resolve the (many) advisories the old deps carry.

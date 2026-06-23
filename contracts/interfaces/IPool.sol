@@ -45,7 +45,9 @@ interface IPool {
 
     /// @notice Returns the aggregated account data across all reserves.
     /// @dev All *Base values are in the oracle base currency (USD, 8 decimals).
-    function getUserAccountData(address user)
+    function getUserAccountData(
+        address user
+    )
         external
         view
         returns (

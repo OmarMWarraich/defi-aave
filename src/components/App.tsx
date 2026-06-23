@@ -7,11 +7,22 @@ import {
   useWaitForTransactionReceipt,
   useWriteContract,
 } from "wagmi";
-import { erc20Abi, formatEther, formatUnits, parseEther, parseUnits } from "viem";
+import {
+  erc20Abi,
+  formatEther,
+  formatUnits,
+  parseEther,
+  parseUnits,
+} from "viem";
 import { aaveDeFiAbi } from "../contracts/aaveDeFi";
-import { AAVEDEFI_ADDRESS, AWETH_ADDRESS, DAI_ADDRESS } from "../contracts/addresses";
+import {
+  AAVEDEFI_ADDRESS,
+  AWETH_ADDRESS,
+  DAI_ADDRESS,
+} from "../contracts/addresses";
 
-const dai = (v: bigint | undefined) => (v === undefined ? "0" : formatUnits(v, 18));
+const dai = (v: bigint | undefined) =>
+  v === undefined ? "0" : formatUnits(v, 18);
 
 function App() {
   const { address, isConnected } = useAccount();
@@ -48,7 +59,10 @@ function App() {
     args: address ? [address] : undefined,
     ...enabledForAccount,
   });
-  const { data: daiPrice } = useReadContract({ ...aave, functionName: "daiPriceUSD" });
+  const { data: daiPrice } = useReadContract({
+    ...aave,
+    functionName: "daiPriceUSD",
+  });
   const { data: maxSafeBorrow } = useReadContract({
     ...aave,
     functionName: "maxSafeBorrowDAI",
@@ -60,7 +74,8 @@ function App() {
   const loading = isPending || isConfirming;
 
   // --- input validation ---
-  const isDecimal = (s: string) => /^\d*\.?\d*$/.test(s) && s !== "" && s !== ".";
+  const isDecimal = (s: string) =>
+    /^\d*\.?\d*$/.test(s) && s !== "" && s !== ".";
   const ethValid = isDecimal(ethInput) && Number(ethInput) > 0;
   const daiTrimmed = daiInput.trim();
   const daiValid = daiTrimmed === "" || isDecimal(daiTrimmed);
@@ -97,7 +112,9 @@ function App() {
         </p>
 
         {!isConnected ? (
-          <p className="mt-10 text-gray-600">Connect your wallet to get started.</p>
+          <p className="mt-10 text-gray-600">
+            Connect your wallet to get started.
+          </p>
         ) : (
           <>
             <div className="mx-auto mt-8 flex max-w-md flex-col gap-4 rounded-lg bg-white p-6 shadow">
@@ -151,7 +168,8 @@ function App() {
               </p>
               {error && (
                 <p className="text-sm text-red-600">
-                  {(error as { shortMessage?: string }).shortMessage ?? error.message}
+                  {(error as { shortMessage?: string }).shortMessage ??
+                    error.message}
                 </p>
               )}
             </div>
@@ -181,7 +199,9 @@ function App() {
             </section>
 
             <section className="mt-10">
-              <h2 className="mb-3 text-lg font-medium">Your totals on the AaveDeFi contract</h2>
+              <h2 className="mb-3 text-lg font-medium">
+                Your totals on the AaveDeFi contract
+              </h2>
               <div className="mx-auto inline-block overflow-hidden rounded-lg bg-white shadow">
                 <table className="text-sm">
                   <thead>
@@ -197,7 +217,9 @@ function App() {
                         {totalETHDeposits ? formatEther(totalETHDeposits) : "0"}
                       </td>
                       <td className={tdClass}>{dai(totalDAIBorrows)}</td>
-                      <td className={tdClass}>{daiPrice ? formatUnits(daiPrice, 8) : "0"}</td>
+                      <td className={tdClass}>
+                        {daiPrice ? formatUnits(daiPrice, 8) : "0"}
+                      </td>
                     </tr>
                   </tbody>
                 </table>

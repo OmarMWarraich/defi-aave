@@ -77,7 +77,10 @@ async function main() {
     console.log("Waiting for block confirmations before verification...");
     await aaveDeFi.deploymentTransaction()?.wait(5);
     try {
-      await run("verify:verify", { address, constructorArguments: constructorArgs });
+      await run("verify:verify", {
+        address,
+        constructorArguments: constructorArgs,
+      });
     } catch (err) {
       console.warn(`Verification skipped/failed: ${(err as Error).message}`);
     }

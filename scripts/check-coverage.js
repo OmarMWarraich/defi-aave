@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 // Enforces minimum coverage thresholds against coverage/coverage-summary.json
 // (produced by `hardhat coverage` via the json-summary reporter in .solcover.js).
 //
@@ -18,7 +17,12 @@ if (!process.env.MAINNET_RPC_URL) {
   process.exit(0);
 }
 
-const summaryPath = path.join(__dirname, "..", "coverage", "coverage-summary.json");
+const summaryPath = path.join(
+  __dirname,
+  "..",
+  "coverage",
+  "coverage-summary.json",
+);
 if (!fs.existsSync(summaryPath)) {
   console.error(
     `Coverage summary not found at ${summaryPath}. Run \`npm run coverage\` first.`,

@@ -15,9 +15,5 @@ interface IWrappedTokenGatewayV3 {
     ) external payable;
 
     /// @notice Withdraws `amount` of supplied ETH and sends it to `to`.
-    function withdrawETH(
-        address pool,
-        uint256 amount,
-        address to
-    ) external;
+    function withdrawETH(address pool, uint256 amount, address to) external;
 }

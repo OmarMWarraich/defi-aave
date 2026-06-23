@@ -65,8 +65,16 @@ contract AaveDeFi is ReentrancyGuard, Ownable {
         uint256 daiBorrowed,
         uint256 totalDAIBorrows
     );
-    event Repay(address indexed user, uint256 daiRepaid, uint256 totalDAIBorrows);
-    event Withdraw(address indexed user, uint256 ethWithdrawn, uint256 totalETHDeposits);
+    event Repay(
+        address indexed user,
+        uint256 daiRepaid,
+        uint256 totalDAIBorrows
+    );
+    event Withdraw(
+        address indexed user,
+        uint256 ethWithdrawn,
+        uint256 totalETHDeposits
+    );
     event SafetyFactorUpdated(uint256 oldBps, uint256 newBps);
 
     error ZeroAmount();
@@ -107,24 +115,33 @@ contract AaveDeFi is ReentrancyGuard, Ownable {
     ///      borrow capacity scaled by `safetyFactorBps` — the browser no longer
     ///      dictates an unchecked borrow amount.
     /// @param requestedDAI Amount of DAI to borrow (may be 0 to only deposit).
-    function depositETHAndBorrowDAI(uint256 requestedDAI)
-        external
-        payable
-        nonReentrant
-    {
+    function depositETHAndBorrowDAI(
+        uint256 requestedDAI
+    ) external payable nonReentrant {
         if (msg.value == 0) revert ZeroAmount();
 
         totalETHDeposits[msg.sender] += msg.value;
-        wethGateway.depositETH{value: msg.value}(address(pool), address(this), REFERRAL_CODE);
+        wethGateway.depositETH{value: msg.value}(
+            address(pool),
+            address(this),
+            REFERRAL_CODE
+        );
 
         uint256 daiPrice = oracle.getAssetPrice(address(dai));
         if (daiPrice == 0) revert OraclePriceZero();
 
         if (requestedDAI > 0) {
             uint256 safeMax = _maxSafeBorrowDAI(daiPrice);
-            if (requestedDAI > safeMax) revert BorrowExceedsSafeMax(requestedDAI, safeMax);
+            if (requestedDAI > safeMax)
+                revert BorrowExceedsSafeMax(requestedDAI, safeMax);
 
-            pool.borrow(address(dai), requestedDAI, VARIABLE_RATE, REFERRAL_CODE, address(this));
+            pool.borrow(
+                address(dai),
+                requestedDAI,
+                VARIABLE_RATE,
+                REFERRAL_CODE,
+                address(this)
+            );
             totalDAIBorrows[msg.sender] += requestedDAI;
             dai.safeTransfer(msg.sender, requestedDAI);
         }
@@ -147,7 +164,12 @@ contract AaveDeFi is ReentrancyGuard, Ownable {
 
         dai.safeTransferFrom(msg.sender, address(this), amount);
         dai.forceApprove(address(pool), amount);
-        uint256 repaid = pool.repay(address(dai), amount, VARIABLE_RATE, address(this));
+        uint256 repaid = pool.repay(
+            address(dai),
+            amount,
+            VARIABLE_RATE,
+            address(this)
+        );
 
         // Reduce caller's tracked debt, never underflowing past zero.
         uint256 tracked = totalDAIBorrows[msg.sender];
@@ -187,7 +209,11 @@ contract AaveDeFi is ReentrancyGuard, Ownable {
     }
 
     /// @notice Rescue ERC20 tokens accidentally sent to this contract (owner only).
-    function rescueERC20(IERC20 token, address to, uint256 amount) external onlyOwner {
+    function rescueERC20(
+        IERC20 token,
+        address to,
+        uint256 amount
+    ) external onlyOwner {
         token.safeTransfer(to, amount);
     }
 
@@ -205,11 +231,16 @@ contract AaveDeFi is ReentrancyGuard, Ownable {
 
     /// @dev Converts Aave's available borrow capacity (base currency, 8 decimals)
     ///      into DAI units and applies the safety factor.
-    function _maxSafeBorrowDAI(uint256 daiPrice) internal view returns (uint256) {
-        (, , uint256 availableBorrowsBase, , , ) = pool.getUserAccountData(address(this));
+    function _maxSafeBorrowDAI(
+        uint256 daiPrice
+    ) internal view returns (uint256) {
+        (, , uint256 availableBorrowsBase, , , ) = pool.getUserAccountData(
+            address(this)
+        );
         // availableBorrowsBase and daiPrice share the oracle base unit (1e8),
         // so it cancels: maxDai = availableBorrowsBase * 10^daiDecimals / daiPrice.
-        uint256 maxDai = (availableBorrowsBase * (10 ** daiDecimals)) / daiPrice;
+        uint256 maxDai = (availableBorrowsBase * (10 ** daiDecimals)) /
+            daiPrice;
         return (maxDai * safetyFactorBps) / BPS;
     }
 }
