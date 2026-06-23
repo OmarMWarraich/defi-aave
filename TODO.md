@@ -42,7 +42,7 @@ Pick one and delete the Truffle stack (`truffle-config.js`, `migrations/`, `.bab
 - [x] **Decision: Hardhat** (continuity with the JS frontend; Foundry can be added later as a fork-test add-on).
 - [x] Delete the Truffle stack: removed `truffle-config.js`, `migrations/`, `.babelrc`, `babel-*` deps, `truffle` dep, and the Truffle-only `Migrations.sol`/`Migrations.json` bookkeeping artifacts.
 - [x] Initialize Hardhat with `hardhat-toolbox` (ethers v6, chai matchers, gas reporter, coverage, verify). Added `hardhat.config.ts` (TS), `tsconfig.json`, deps + `compile`/`test:contracts`/`coverage` scripts. `npx hardhat compile` succeeds (solc 0.8.24).
-- [ ] Move contracts to a standard `contracts/` dir; configure compiler to a pinned recent `0.8.2x` with optimizer settings.
+- [x] Move contracts to a standard `contracts/` dir; configure compiler to a pinned recent `0.8.2x` with optimizer settings. (Moved all 5 `.sol` files; removed the `paths.sources` override; solc pinned to `0.8.24` + optimizer. Recompiles clean.)
 - [ ] Replace Ganache mainnet-fork workflow with **Hardhat Network forking** (`forking.url` from `.env`, pin a `blockNumber` for deterministic tests).
 - [ ] Add deployment scripts (`hardhat-deploy` or `scripts/deploy.ts`) replacing `migrations/`.
 - [ ] Generate TypeChain typings for the frontend to consume.

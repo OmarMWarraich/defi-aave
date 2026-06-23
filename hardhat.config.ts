@@ -20,11 +20,6 @@ const config: HardhatUserConfig = {
       optimizer: { enabled: true, runs: 200 },
     },
   },
-  // NOTE: contracts still live under src/contracts/ from the legacy layout.
-  // The next Phase 1 task moves them to ./contracts and removes this override.
-  paths: {
-    sources: "./src/contracts",
-  },
   networks: {
     // Default in-process network. Forks mainnet so tests can hit live Aave.
     hardhat: MAINNET_RPC_URL
