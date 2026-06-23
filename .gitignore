@@ -10,6 +10,13 @@
 
 # production
 /build
+/dist
+
+# smart-contract toolchain (Hardhat / Foundry / TypeChain)
+/cache
+/artifacts
+/typechain-types
+/out
 
 # misc
 .DS_Store

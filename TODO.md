@@ -30,10 +30,10 @@ dependencies, and documentation. The stack as-is is almost entirely end-of-life.
 
 ## Phase 0 — Repo hygiene & baseline
 
-- [ ] `git init` (project is not currently a git repo) and commit the legacy code as the baseline.
+- [x] `git init` (project is not currently a git repo) and commit the legacy code as the baseline.
 - [ ] Remove the committed `package-lock.json` only after the new toolchain is chosen, then regenerate.
-- [ ] Add `.env` + `.env.example` for RPC URLs and keys; ensure `.gitignore` covers `.env`, `cache/`, `artifacts/`, `typechain-types/`, `out/`, `coverage/`.
-- [ ] Confirm a license file exists (README says MIT) and add `LICENSE`.
+- [x] Add `.env` + `.env.example` for RPC URLs and keys; ensure `.gitignore` covers `.env`, `cache/`, `artifacts/`, `typechain-types/`, `out/`, `coverage/`.
+- [x] Confirm a license file exists (README says MIT) and add `LICENSE`.
 
 ## Phase 1 — Toolchain migration (Truffle → Hardhat or Foundry)
 
