@@ -82,7 +82,7 @@ Pick one and delete the Truffle stack (`truffle-config.js`, `migrations/`, `.bab
 
 ## Phase 4 — Frontend rewrite (CRA/React 16 → Vite + React 18/19)
 
-- [ ] Replace `react-scripts`/CRA with **Vite** + TypeScript.
+- [x] Replace `react-scripts`/CRA with **Vite** + TypeScript. Added `vite.config.ts`, root `index.html`, TS entry `src/main.tsx` (React 18 `createRoot` + StrictMode), `tsconfig.app.json`. Bumped React 16→18, dropped `react-scripts`/CRA + unused `react-bootstrap`; scripts are now `dev`/`build`/`preview`/`typecheck:web`. Verified: `typecheck:web` passes, `vite build` succeeds, dev server serves HTTP 200, and Hardhat still compiles (toolchains coexist). **Transitional shim:** `vite-plugin-node-polyfills` lets web3 1.x bundle — remove it when the frontend moves to viem/wagmi. Legacy `App.jsx` (class component + web3) is intentionally untouched here — that's the next checkbox.
 - [ ] Convert `App.js` class component to a **function component with hooks**; remove `componentWillMount`.
 - [ ] Replace manual `web3.js` + `window.ethereum.enable()` wiring with a modern stack:
   - **wagmi + viem** for contract reads/writes and chain state.
