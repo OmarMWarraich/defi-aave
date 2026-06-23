@@ -107,15 +107,15 @@ Pick one and delete the Truffle stack (`truffle-config.js`, `migrations/`, `.bab
 
 ## Phase 6 — Documentation
 
-- [ ] Rewrite `README.md` _(interim "under refactor" banner already added at the top pointing here; full rewrite still pending)_:
-  - Update the entire "Technology Stack" section to the new tools.
-  - Replace Ganache/Infura instructions with Hardhat fork + `.env` setup.
-  - Document `.env.example` variables (RPC URL, deployer key, Etherscan key).
-  - Update Node version, install, run, test, and deploy commands.
-  - Note that the dapp targets Aave **v3**, and which network(s)/addresses.
-- [ ] Add an `ARCHITECTURE.md` (contract ↔ frontend ↔ Aave interaction diagram).
-- [ ] Add inline NatSpec/JSDoc; document the borrow math and safety factor assumptions.
-- [ ] Update the "To do app extension ideas" list and link/remove the empty video link.
+- [x] Rewrite `README.md` (interim banner removed; full rewrite done):
+  - [x] Tech-stack table rewritten to the new tools (Hardhat, OZ v5, Aave v3, Vite/React 18/TS, wagmi/viem/RainbowKit, Tailwind v4, CI).
+  - [x] Ganache/Infura instructions replaced with the Hardhat mainnet-fork + `.env` workflow.
+  - [x] `.env.example` variables documented in a table.
+  - [x] Node 20, install, run/test/coverage/lint and deploy (`deploy:local`/`deploy:sepolia`) commands updated; project structure refreshed.
+  - [x] Notes Aave **v3** target + that addresses live (per-network) in `scripts/deploy.ts`.
+- [x] Add an `ARCHITECTURE.md` (contract ↔ frontend ↔ Aave interaction diagram). ASCII component diagram, lifecycle table, borrow-math/units, frontend stack, CI, and the shared-position limitation.
+- [x] Add inline NatSpec/JSDoc; document the borrow math and safety factor assumptions. Contract NatSpec already complete; expanded the `safetyFactorBps` + `_maxSafeBorrowDAI` docs with the full formula, units (v3 USD/8-dec), and the liquidation-buffer rationale. Frontend modules carry header comments + the on-chain-safe-value note.
+- [x] Update the "To do app extension ideas" list and link/remove the empty video link. Replaced with a current Roadmap section (per-user vaults, arbitrary assets, rate/health metrics, event history, Foundry fuzz); dropped the empty "LINK TO VIDEO".
 
 ---
 

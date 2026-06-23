@@ -53,8 +53,14 @@ contract AaveDeFi is ReentrancyGuard, Ownable {
     mapping(address => uint256) public totalETHDeposits;
     mapping(address => uint256) public totalDAIBorrows;
 
-    /// @notice Fraction (in bps) of Aave's available borrow capacity this
-    ///         contract will allow, as a liquidation safety buffer.
+    /// @notice Fraction (in basis points) of Aave's available borrow capacity
+    ///         this contract will allow, as a liquidation safety buffer.
+    /// @dev Aave's `availableBorrowsBase` already reflects the collateral's LTV.
+    ///      Borrowing the full amount would put the position at the edge of its
+    ///      borrowing power, so a small price move could trigger liquidation.
+    ///      `safetyFactorBps` borrows only a fraction of that headroom — e.g.
+    ///      `6000` (60%) is the project default, matching the original demo's
+    ///      0.6 safety factor. Tunable by the owner via `setSafetyFactor`.
     uint256 public safetyFactorBps;
 
     event DepositBorrow(
@@ -229,16 +235,25 @@ contract AaveDeFi is ReentrancyGuard, Ownable {
         return _maxSafeBorrowDAI(daiPrice);
     }
 
-    /// @dev Converts Aave's available borrow capacity (base currency, 8 decimals)
-    ///      into DAI units and applies the safety factor.
+    /// @dev Converts Aave's available borrow capacity into DAI units and applies
+    ///      the safety factor. Borrow math (all amounts integer / wei):
+    ///
+    ///        availableBorrowsBase : spare borrowing power, USD with 1e8 precision
+    ///        daiPrice             : DAI price, USD with 1e8 precision (~1e8)
+    ///        10**daiDecimals      : DAI's own unit (1e18)
+    ///
+    ///        maxDai = availableBorrowsBase * 10**daiDecimals / daiPrice
+    ///
+    ///      The 1e8 base unit cancels between numerator and `daiPrice`, leaving a
+    ///      DAI amount in its native decimals. We then scale by `safetyFactorBps`
+    ///      (out of `BPS` = 10_000) to leave a liquidation buffer. This is the
+    ///      on-chain replacement for the old browser-side floating-point estimate.
     function _maxSafeBorrowDAI(
         uint256 daiPrice
     ) internal view returns (uint256) {
         (, , uint256 availableBorrowsBase, , , ) = pool.getUserAccountData(
             address(this)
         );
-        // availableBorrowsBase and daiPrice share the oracle base unit (1e8),
-        // so it cancels: maxDai = availableBorrowsBase * 10^daiDecimals / daiPrice.
         uint256 maxDai = (availableBorrowsBase * (10 ** daiDecimals)) /
             daiPrice;
         return (maxDai * safetyFactorBps) / BPS;
