@@ -59,14 +59,21 @@ function App() {
   const { isLoading: isConfirming } = useWaitForTransactionReceipt({ hash });
   const loading = isPending || isConfirming;
 
+  // --- input validation ---
+  const isDecimal = (s: string) => /^\d*\.?\d*$/.test(s) && s !== "" && s !== ".";
+  const ethValid = isDecimal(ethInput) && Number(ethInput) > 0;
+  const daiTrimmed = daiInput.trim();
+  const daiValid = daiTrimmed === "" || isDecimal(daiTrimmed);
+  const canSubmit = ethValid && daiValid && !loading;
+
   const onDepositBorrow = () => {
-    if (!ethInput) return;
+    if (!ethValid || !daiValid) return;
     // The requested DAI is validated on-chain against maxSafeBorrowDAI; no
     // browser-side float borrow math any more (see contracts/AaveDeFi.sol).
     writeContract({
       ...aave,
       functionName: "depositETHAndBorrowDAI",
-      args: [parseUnits(daiInput || "0", 18)],
+      args: [parseUnits(daiTrimmed || "0", 18)],
       value: parseEther(ethInput),
     });
   };
@@ -94,31 +101,47 @@ function App() {
         ) : (
           <>
             <div className="mx-auto mt-8 flex max-w-md flex-col gap-4 rounded-lg bg-white p-6 shadow">
-              <label className="flex items-center justify-between gap-3">
-                <span>ETH to deposit</span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={ethInput}
-                  placeholder="1.0"
-                  onChange={(e) => setEthInput(e.target.value)}
-                  className={inputClass}
-                />
-              </label>
-              <label className="flex items-center justify-between gap-3">
-                <span>DAI to borrow</span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={daiInput}
-                  placeholder="0"
-                  onChange={(e) => setDaiInput(e.target.value)}
-                  className={inputClass}
-                />
-              </label>
+              <div className="flex flex-col gap-1">
+                <label className="flex items-center justify-between gap-3">
+                  <span>ETH to deposit</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={ethInput}
+                    placeholder="1.0"
+                    onChange={(e) => setEthInput(e.target.value)}
+                    aria-invalid={ethInput !== "" && !ethValid}
+                    className={inputClass}
+                  />
+                </label>
+                {ethInput !== "" && !ethValid && (
+                  <span className="text-right text-xs text-red-600">
+                    Enter a positive number.
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="flex items-center justify-between gap-3">
+                  <span>DAI to borrow</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={daiInput}
+                    placeholder="0"
+                    onChange={(e) => setDaiInput(e.target.value)}
+                    aria-invalid={!daiValid}
+                    className={inputClass}
+                  />
+                </label>
+                {!daiValid && (
+                  <span className="text-right text-xs text-red-600">
+                    Enter a valid amount (or 0).
+                  </span>
+                )}
+              </div>
               <button
                 onClick={onDepositBorrow}
-                disabled={loading || !ethInput}
+                disabled={!canSubmit}
                 className="rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? "Processing…" : "Deposit & Borrow"}
