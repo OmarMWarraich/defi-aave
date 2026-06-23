@@ -43,8 +43,8 @@ Pick one and delete the Truffle stack (`truffle-config.js`, `migrations/`, `.bab
 - [x] Delete the Truffle stack: removed `truffle-config.js`, `migrations/`, `.babelrc`, `babel-*` deps, `truffle` dep, and the Truffle-only `Migrations.sol`/`Migrations.json` bookkeeping artifacts.
 - [x] Initialize Hardhat with `hardhat-toolbox` (ethers v6, chai matchers, gas reporter, coverage, verify). Added `hardhat.config.ts` (TS), `tsconfig.json`, deps + `compile`/`test:contracts`/`coverage` scripts. `npx hardhat compile` succeeds (solc 0.8.24).
 - [x] Move contracts to a standard `contracts/` dir; configure compiler to a pinned recent `0.8.2x` with optimizer settings. (Moved all 5 `.sol` files; removed the `paths.sources` override; solc pinned to `0.8.24` + optimizer. Recompiles clean.)
-- [ ] Replace Ganache mainnet-fork workflow with **Hardhat Network forking** (`forking.url` from `.env`, pin a `blockNumber` for deterministic tests).
-- [ ] Add deployment scripts (`hardhat-deploy` or `scripts/deploy.ts`) replacing `migrations/`.
+- [x] Replace Ganache mainnet-fork workflow with **Hardhat Network forking** (`forking.url` from `.env`, pin a `blockNumber` for deterministic tests). `hardhat` network forks from `MAINNET_RPC_URL`, pins `FORK_BLOCK_NUMBER` (defaults to `19_000_000`); falls back to a non-forked node when no RPC is set (CI without secrets). Needs a real `MAINNET_RPC_URL` to exercise.
+- [x] Add deployment scripts (`hardhat-deploy` or `scripts/deploy.ts`) replacing `migrations/`. `scripts/deploy.ts` (ethers v6) deploys `AaveDeFi` + auto-verifies on public networks. Smoke-tested: wiring works; deploy reverts in the constructor on a non-forked node (hardcoded mainnet addresses have no code) — works on a fork / once Phase 2 injects addresses.
 - [ ] Generate TypeChain typings for the frontend to consume.
 
 ## Phase 2 — Smart contract refactor (Aave v2 → v3)

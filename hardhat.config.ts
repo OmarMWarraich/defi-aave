@@ -12,6 +12,12 @@ const {
   ETHERSCAN_API_KEY,
 } = process.env;
 
+// Pin a default mainnet block so fork tests are deterministic even when
+// FORK_BLOCK_NUMBER is unset. Aave v2 has been live on mainnet since 2020,
+// so this (early-2024) block has all the protocol contracts deployed.
+// Override per-run via FORK_BLOCK_NUMBER in .env.
+const DEFAULT_FORK_BLOCK_NUMBER = 19_000_000;
+
 const config: HardhatUserConfig = {
   solidity: {
     // Aave v3 / OpenZeppelin v5 require ^0.8.20; pin a recent patch.
@@ -28,7 +34,7 @@ const config: HardhatUserConfig = {
             url: MAINNET_RPC_URL,
             blockNumber: FORK_BLOCK_NUMBER
               ? Number(FORK_BLOCK_NUMBER)
-              : undefined,
+              : DEFAULT_FORK_BLOCK_NUMBER,
           },
         }
       : {},
