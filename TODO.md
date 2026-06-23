@@ -39,7 +39,8 @@ dependencies, and documentation. The stack as-is is almost entirely end-of-life.
 
 Pick one and delete the Truffle stack (`truffle-config.js`, `migrations/`, `.babelrc`, `babel-*` deps).
 
-- [ ] **Decision:** Hardhat (TS-friendly, good for a JS/React repo) **or** Foundry (fastest, Solidity-native tests). Recommend **Hardhat** here for continuity with the JS frontend; Foundry as a fork-test add-on.
+- [x] **Decision: Hardhat** (continuity with the JS frontend; Foundry can be added later as a fork-test add-on).
+- [x] Delete the Truffle stack: removed `truffle-config.js`, `migrations/`, `.babelrc`, `babel-*` deps, `truffle` dep, and the Truffle-only `Migrations.sol`/`Migrations.json` bookkeeping artifacts.
 - [ ] Initialize Hardhat with `hardhat-toolbox` (ethers v6, chai matchers, gas reporter, coverage, verify).
 - [ ] Move contracts to a standard `contracts/` dir; configure compiler to a pinned recent `0.8.2x` with optimizer settings.
 - [ ] Replace Ganache mainnet-fork workflow with **Hardhat Network forking** (`forking.url` from `.env`, pin a `blockNumber` for deterministic tests).
