@@ -1,5 +1,14 @@
 # AaveDeFi Fullstack applications 
 
+> ⚠️ **This project is being modernized — the instructions below are out of date.**
+>
+> The toolchain has moved from **Truffle/Ganache → Hardhat** and **CRA → Vite + TypeScript**,
+> and the contract targets **Aave v3** (not v2). Commands such as `truffle compile/migrate/test`
+> and the `ganache-cli` fork workflow no longer apply. Current commands during the transition:
+> `npx hardhat compile` / `npm run test:contracts` (set `MAINNET_RPC_URL` in `.env` for fork tests),
+> `npm run dev` (frontend). See [`TODO.md`](./TODO.md) for the refactor plan and progress.
+> This README will be fully rewritten in Phase 6.
+
 ### About
 A simple full stack application with smart contract that allows to interact with the Aave lending protocol.
 With a single function you can deposit ETH and then borrow some DAI against that ETH to your wallet address. 

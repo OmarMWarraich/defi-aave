@@ -83,7 +83,7 @@ Pick one and delete the Truffle stack (`truffle-config.js`, `migrations/`, `.bab
 ## Phase 4 — Frontend rewrite (CRA/React 16 → Vite + React 18/19)
 
 - [x] Replace `react-scripts`/CRA with **Vite** + TypeScript. Added `vite.config.ts`, root `index.html`, TS entry `src/main.tsx` (React 18 `createRoot` + StrictMode), `tsconfig.app.json`. Bumped React 16→18, dropped `react-scripts`/CRA + unused `react-bootstrap`; scripts are now `dev`/`build`/`preview`/`typecheck:web`. Verified: `typecheck:web` passes, `vite build` succeeds, dev server serves HTTP 200, and Hardhat still compiles (toolchains coexist). **Transitional shim:** `vite-plugin-node-polyfills` lets web3 1.x bundle — remove it when the frontend moves to viem/wagmi. Legacy `App.jsx` (class component + web3) is intentionally untouched here — that's the next checkbox.
-- [ ] Convert `App.js` class component to a **function component with hooks**; remove `componentWillMount`.
+- [x] Convert `App.js` class component to a **function component with hooks**; remove `componentWillMount`. Now `useState`/`useRef`/`useEffect`/`useCallback`; the `componentWillMount` load-chain → one `useEffect([])` (with a `cancelled` guard, parallelized via `Promise.all`). Fixed the controlled-input bug (`value={ethInput}`). **Scope:** web3.js data layer + stale ABI calls (`daiEthprice`, `borrowDAIAgainstETH`) kept intact — the viem/wagmi swap, ABI rewrite, and `window.ethereum.enable()` removal are the next checkboxes. Type-checks and builds clean.
 - [ ] Replace manual `web3.js` + `window.ethereum.enable()` wiring with a modern stack:
   - **wagmi + viem** for contract reads/writes and chain state.
   - **RainbowKit** (or Web3Modal/ConnectKit) for wallet connection (handles EIP-1193/1102, multi-wallet).
@@ -105,7 +105,7 @@ Pick one and delete the Truffle stack (`truffle-config.js`, `migrations/`, `.bab
 
 ## Phase 6 — Documentation
 
-- [ ] Rewrite `README.md`:
+- [ ] Rewrite `README.md` _(interim "under refactor" banner already added at the top pointing here; full rewrite still pending)_:
   - Update the entire "Technology Stack" section to the new tools.
   - Replace Ganache/Infura instructions with Hardhat fork + `.env` setup.
   - Document `.env.example` variables (RPC URL, deployer key, Etherscan key).
