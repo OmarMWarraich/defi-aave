@@ -44,14 +44,20 @@
     "preview": "vite preview",
     "typecheck:web": "tsc -p tsconfig.app.json --noEmit",
     "compile": "hardhat compile",
+    "test": "npm run test:contracts",
     "test:contracts": "hardhat test",
     "test:gas": "REPORT_GAS=true hardhat test",
     "coverage": "hardhat coverage",
     "coverage:check": "hardhat coverage && node scripts/check-coverage.js",
+    "deploy:local": "hardhat run scripts/deploy.ts",
+    "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:sol": "solhint 'contracts/**/*.sol'",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
