@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint (ESLint)
+        run: npm run lint
+
+      - name: Format check (Prettier)
+        run: npm run format:check
+
+      - name: Lint contracts (solhint)
+        run: npm run lint:sol
+
+      - name: Type-check frontend
+        run: npm run typecheck:web
+
+      - name: Compile contracts
+        run: npm run compile
+
+      - name: Build frontend
+        run: npm run build
+
+      # Fork tests run when MAINNET_RPC_URL is configured (repo secret);
+      # they skip gracefully otherwise, so external PRs without the secret
+      # still pass. Coverage thresholds are enforced only when the fork runs.
+      - name: Contract tests (mainnet fork)
+        run: npm run test:contracts
+        env:
+          MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
+
+      - name: Coverage (threshold gate)
+        run: npm run coverage:check
+        env:
+          MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}

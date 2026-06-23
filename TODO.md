@@ -100,7 +100,7 @@ Pick one and delete the Truffle stack (`truffle-config.js`, `migrations/`, `.bab
 ## Phase 5 — Quality & CI
 
 - [x] Add ESLint (flat config) + Prettier; add `solhint` + `prettier-plugin-solidity` for contracts. `eslint.config.mjs` (flat: TS/React-hooks for `src/`, Node/Mocha for Hardhat TS, `eslint-config-prettier` last); `.prettierrc.json` (+ `prettier-plugin-solidity`) + `.prettierignore`; `.solhint.json` (recommended, with deliberate naming rules relaxed). Scripts: `lint`/`lint:fix`/`lint:sol`/`format`/`format:check`. Whole repo formatted; all four pass clean. Fixed lint findings in the test (chai `properAddress`→`isAddress`, dropped an `as any`) — build/compile/test all still green.
-- [ ] Add a GitHub Actions workflow: install → lint → compile → test (with fork RPC secret) → coverage.
+- [x] Add a GitHub Actions workflow: install → lint → compile → test (with fork RPC secret) → coverage. `.github/workflows/ci.yml` (push to main/master + PRs, Node 20, npm cache, concurrency-cancel). Steps: `npm ci` → `lint` → `format:check` → `lint:sol` → `typecheck:web` → `compile` → `build` → `test:contracts` → `coverage:check`, with `MAINNET_RPC_URL` from repo secrets (fork tests skip gracefully if absent). Every step's command verified locally; `npm ci` confirmed in sync. **Configure the `MAINNET_RPC_URL` repo secret** for the fork tests + coverage gate to actually exercise.
 - [ ] Add `npm` scripts: `dev`, `build`, `test`, `test:contracts`, `lint`, `format`, `deploy:sepolia`.
 - [ ] Run `npm audit` and resolve the (many) advisories the old deps carry.
 - [ ] Pin Node version via `.nvmrc` / `engines` to **20 LTS** (or 22).
