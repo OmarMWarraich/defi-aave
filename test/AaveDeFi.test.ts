@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import type { AaveDeFi } from "../typechain-types";
 
 /**
@@ -78,6 +79,25 @@ describeFork("AaveDeFi (mainnet fork)", () => {
     });
   });
 
+  describe("oracle price usage", () => {
+    it("reads a sane DAI price from the Aave oracle (USD, 8 decimals)", async () => {
+      const { aaveDeFi } = await loadFixture(deployFixture);
+      const price = await aaveDeFi.daiPriceUSD();
+      // DAI is ~$1, so the 8-decimal USD price should sit near 1e8.
+      expect(price).to.be.greaterThan(0n);
+      expect(price).to.be.greaterThan(ethers.parseUnits("0.9", 8));
+      expect(price).to.be.lessThan(ethers.parseUnits("1.1", 8));
+    });
+
+    it("derives a positive safe-borrow cap once collateral exists", async () => {
+      const { aaveDeFi, borrower } = await loadFixture(deployFixture);
+      await aaveDeFi
+        .connect(borrower)
+        .depositETHAndBorrowDAI(0n, { value: ethers.parseEther("1") });
+      expect(await aaveDeFi.maxSafeBorrowDAI()).to.be.greaterThan(0n);
+    });
+  });
+
   describe("depositETHAndBorrowDAI", () => {
     const oneEth = ethers.parseEther("1");
 
@@ -88,14 +108,22 @@ describeFork("AaveDeFi (mainnet fork)", () => {
       ).to.be.revertedWithCustomError(aaveDeFi, "ZeroAmount");
     });
 
-    it("deposits ETH collateral (borrow = 0) and tracks the balance", async () => {
-      const { aaveDeFi, borrower } = await loadFixture(deployFixture);
+    it("deposits ETH collateral (borrow = 0), emits the event, and receives aWETH", async () => {
+      const { aaveDeFi, borrower, aWeth } = await loadFixture(deployFixture);
+      const contractAddr = await aaveDeFi.getAddress();
+      const aWethBefore = await aWeth.balanceOf(contractAddr);
 
+      // DepositBorrow(user, ethDeposited, totalETHDeposits, daiPrice, daiBorrowed, totalDAIBorrows)
       await expect(
         aaveDeFi.connect(borrower).depositETHAndBorrowDAI(0n, { value: oneEth }),
-      ).to.emit(aaveDeFi, "DepositBorrow");
+      )
+        .to.emit(aaveDeFi, "DepositBorrow")
+        .withArgs(borrower.address, oneEth, oneEth, anyValue, 0n, 0n);
 
       expect(await aaveDeFi.totalETHDeposits(borrower.address)).to.equal(oneEth);
+      // aWETH (interest-bearing) credited to the contract is at least the deposit.
+      const aWethAfter = await aWeth.balanceOf(contractAddr);
+      expect(aWethAfter - aWethBefore).to.be.greaterThanOrEqual(oneEth);
     });
 
     it("reverts when the requested DAI exceeds the safe max", async () => {
@@ -145,13 +173,18 @@ describeFork("AaveDeFi (mainnet fork)", () => {
         .connect(borrower)
         .depositETHAndBorrowDAI(borrowAmount, { value: oneEth });
 
+      const daiBefore = await dai.balanceOf(borrower.address);
       await (dai as any).approve(await aaveDeFi.getAddress(), borrowAmount);
-      await expect(aaveDeFi.connect(borrower).repayDAI(borrowAmount)).to.emit(
-        aaveDeFi,
-        "Repay",
-      );
+
+      // Repay(user, daiRepaid, totalDAIBorrows). Debt >= amount, so repaid == amount.
+      await expect(aaveDeFi.connect(borrower).repayDAI(borrowAmount))
+        .to.emit(aaveDeFi, "Repay")
+        .withArgs(borrower.address, borrowAmount, 0n);
 
       expect(await aaveDeFi.totalDAIBorrows(borrower.address)).to.equal(0n);
+      // Borrower's DAI is spent on the repayment.
+      const daiAfter = await dai.balanceOf(borrower.address);
+      expect(daiBefore - daiAfter).to.equal(borrowAmount);
     });
 
     it("reverts on a zero repay", async () => {
@@ -179,10 +212,13 @@ describeFork("AaveDeFi (mainnet fork)", () => {
       await aaveDeFi.connect(borrower).depositETHAndBorrowDAI(0n, { value: oneEth });
 
       const withdrawAmount = ethers.parseEther("0.5");
-      await expect(aaveDeFi.connect(borrower).withdrawETH(withdrawAmount)).to.emit(
-        aaveDeFi,
-        "Withdraw",
-      );
+
+      // Withdraw(user, ethWithdrawn, totalETHDeposits). changeEtherBalance
+      // excludes gas by default, isolating the ETH returned to the caller.
+      await expect(aaveDeFi.connect(borrower).withdrawETH(withdrawAmount))
+        .to.emit(aaveDeFi, "Withdraw")
+        .withArgs(borrower.address, withdrawAmount, oneEth - withdrawAmount)
+        .and.to.changeEtherBalance(borrower, withdrawAmount);
 
       expect(await aaveDeFi.totalETHDeposits(borrower.address)).to.equal(
         oneEth - withdrawAmount,
@@ -193,10 +229,9 @@ describeFork("AaveDeFi (mainnet fork)", () => {
   describe("access control", () => {
     it("lets the owner update the safety factor", async () => {
       const { aaveDeFi, deployer } = await loadFixture(deployFixture);
-      await expect(aaveDeFi.connect(deployer).setSafetyFactor(5_000n)).to.emit(
-        aaveDeFi,
-        "SafetyFactorUpdated",
-      );
+      await expect(aaveDeFi.connect(deployer).setSafetyFactor(5_000n))
+        .to.emit(aaveDeFi, "SafetyFactorUpdated")
+        .withArgs(SAFETY_FACTOR_BPS, 5_000n);
       expect(await aaveDeFi.safetyFactorBps()).to.equal(5_000n);
     });
 

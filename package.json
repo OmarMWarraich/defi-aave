@@ -29,7 +29,9 @@
     "eject": "react-scripts eject",
     "compile": "hardhat compile",
     "test:contracts": "hardhat test",
-    "coverage": "hardhat coverage"
+    "test:gas": "REPORT_GAS=true hardhat test",
+    "coverage": "hardhat coverage",
+    "coverage:check": "hardhat coverage && node scripts/check-coverage.js"
   },
   "eslintConfig": {
     "extends": "react-app"

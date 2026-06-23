@@ -75,9 +75,9 @@ Pick one and delete the Truffle stack (`truffle-config.js`, `migrations/`, `.bab
 ## Phase 3 — Test suite
 
 - [x] Rewrite `test/AaveDeFi.test.js` as Hardhat + chai-matchers (or Foundry fork tests) against a **pinned** mainnet fork. New `test/AaveDeFi.test.ts` (ethers v6, `loadFixture`, typed via TypeChain). Auto-skips when `MAINNET_RPC_URL` is unset (14 pending → CI-safe); fork block pinned via config. **Only the skip path is verified here — actually running green needs a real `MAINNET_RPC_URL` (and may need address/block tweaks).**
-- [ ] Convert from web3.js patterns to ethers v6.
-- [ ] Cover: deposit, borrow, repay, withdraw, event emission, revert paths, oracle price usage, and balance assertions.
-- [ ] Add `solidity-coverage` and a gas report; set a minimum coverage threshold.
+- [x] Convert from web3.js patterns to ethers v6. Tests/scripts are now pure ethers v6 (verified: no `web3`/`.methods`/`toWei`/`HttpProvider`/`artifacts.require` on the Hardhat side). The remaining `web3@1.3.6` dep is only used by the frontend (`src/`) — removed in Phase 4.
+- [x] Cover: deposit, borrow, repay, withdraw, event emission, revert paths, oracle price usage, and balance assertions. 16 cases in `AaveDeFi.test.ts`: lifecycle (deposit/borrow/repay/withdraw); events asserted with `.withArgs` (`anyValue` for the dynamic oracle price); reverts (`ZeroAmount`, `BorrowExceedsSafeMax`, `InsufficientDeposit`, zero-repay, `OwnableUnauthorizedAccount`); oracle (sane DAI price ~1e8, positive safe-borrow cap); balances (DAI deltas on borrow+repay, aWETH credited on deposit, `changeEtherBalance` on withdraw). **Assertions only execute on a real fork** (suite skips without `MAINNET_RPC_URL`).
+- [x] Add `solidity-coverage` and a gas report; set a minimum coverage threshold. `.solcover.js` (skips `interfaces/`, emits `json-summary`); `hardhat coverage` runs clean. Gas via `hardhat-gas-reporter` (`npm run test:gas` / `REPORT_GAS=true`). Threshold gate in `scripts/check-coverage.js` (lines/stmts/funcs ≥80%, branches ≥60%) wired as `npm run coverage:check`; fork-aware (no-op without `MAINNET_RPC_URL`, enforced in CI). **Actual % and gas numbers only populate on a real fork** — both are ~0/empty here since tests skip.
 - [ ] (Optional) Add Foundry invariant/fuzz tests for the borrow math.
 
 ## Phase 4 — Frontend rewrite (CRA/React 16 → Vite + React 18/19)
