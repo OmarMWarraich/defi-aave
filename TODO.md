@@ -74,7 +74,7 @@ Pick one and delete the Truffle stack (`truffle-config.js`, `migrations/`, `.bab
 
 ## Phase 3 — Test suite
 
-- [ ] Rewrite `test/AaveDeFi.test.js` as Hardhat + chai-matchers (or Foundry fork tests) against a **pinned** mainnet fork.
+- [x] Rewrite `test/AaveDeFi.test.js` as Hardhat + chai-matchers (or Foundry fork tests) against a **pinned** mainnet fork. New `test/AaveDeFi.test.ts` (ethers v6, `loadFixture`, typed via TypeChain). Auto-skips when `MAINNET_RPC_URL` is unset (14 pending → CI-safe); fork block pinned via config. **Only the skip path is verified here — actually running green needs a real `MAINNET_RPC_URL` (and may need address/block tweaks).**
 - [ ] Convert from web3.js patterns to ethers v6.
 - [ ] Cover: deposit, borrow, repay, withdraw, event emission, revert paths, oracle price usage, and balance assertions.
 - [ ] Add `solidity-coverage` and a gas report; set a minimum coverage threshold.
