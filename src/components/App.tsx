@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import {
   useAccount,
@@ -33,45 +33,73 @@ function App() {
   const enabledForAccount = { query: { enabled: !!address } } as const;
 
   // --- reads ---
-  const { data: ethBalance } = useBalance({ address });
-  const { data: daiBalance } = useReadContract({
+  const { data: ethBalance, refetch: refetchEthBalance } = useBalance({
+    address,
+  });
+  const { data: daiBalance, refetch: refetchDaiBalance } = useReadContract({
     address: DAI_ADDRESS,
     abi: erc20Abi,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
     ...enabledForAccount,
   });
-  const { data: aWethBalance } = useReadContract({
+  const { data: aWethBalance, refetch: refetchAWethBalance } = useReadContract({
     address: AWETH_ADDRESS,
     abi: erc20Abi,
     functionName: "balanceOf",
     args: [AAVEDEFI_ADDRESS],
   });
-  const { data: totalETHDeposits } = useReadContract({
-    ...aave,
-    functionName: "totalETHDeposits",
-    args: address ? [address] : undefined,
-    ...enabledForAccount,
-  });
-  const { data: totalDAIBorrows } = useReadContract({
-    ...aave,
-    functionName: "totalDAIBorrows",
-    args: address ? [address] : undefined,
-    ...enabledForAccount,
-  });
-  const { data: daiPrice } = useReadContract({
+  const { data: totalETHDeposits, refetch: refetchTotalEthDeposits } =
+    useReadContract({
+      ...aave,
+      functionName: "totalETHDeposits",
+      args: address ? [address] : undefined,
+      ...enabledForAccount,
+    });
+  const { data: totalDAIBorrows, refetch: refetchTotalDaiBorrows } =
+    useReadContract({
+      ...aave,
+      functionName: "totalDAIBorrows",
+      args: address ? [address] : undefined,
+      ...enabledForAccount,
+    });
+  const { data: daiPrice, refetch: refetchDaiPrice } = useReadContract({
     ...aave,
     functionName: "daiPriceUSD",
   });
-  const { data: maxSafeBorrow } = useReadContract({
+  const { data: maxSafeBorrow, refetch: refetchMaxSafeBorrow } = useReadContract({
     ...aave,
     functionName: "maxSafeBorrowDAI",
   });
 
   // --- write ---
   const { data: hash, isPending, error, writeContract } = useWriteContract();
-  const { isLoading: isConfirming } = useWaitForTransactionReceipt({ hash });
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({ hash });
   const loading = isPending || isConfirming;
+
+  useEffect(() => {
+    if (!isConfirmed) return;
+
+    void Promise.all([
+      refetchEthBalance(),
+      refetchDaiBalance(),
+      refetchAWethBalance(),
+      refetchTotalEthDeposits(),
+      refetchTotalDaiBorrows(),
+      refetchDaiPrice(),
+      refetchMaxSafeBorrow(),
+    ]);
+  }, [
+    isConfirmed,
+    refetchEthBalance,
+    refetchDaiBalance,
+    refetchAWethBalance,
+    refetchTotalEthDeposits,
+    refetchTotalDaiBorrows,
+    refetchDaiPrice,
+    refetchMaxSafeBorrow,
+  ]);
 
   // --- input validation ---
   const isDecimal = (s: string) =>
