@@ -138,10 +138,12 @@ describeFork("AaveDeFi (mainnet fork)", () => {
         .depositETHAndBorrowDAI(0n, { value: oneEth });
 
       const safeMax = await aaveDeFi.maxSafeBorrowDAI();
+      // Multiply by 10 so the amount exceeds the safe max even after the second
+      // deposit (which doubles collateral and thus roughly doubles safe max).
       await expect(
         aaveDeFi
           .connect(borrower)
-          .depositETHAndBorrowDAI(safeMax * 2n, { value: oneEth }),
+          .depositETHAndBorrowDAI(safeMax * 10n, { value: oneEth }),
       ).to.be.revertedWithCustomError(aaveDeFi, "BorrowExceedsSafeMax");
     });
 
@@ -231,10 +233,12 @@ describeFork("AaveDeFi (mainnet fork)", () => {
 
       // Withdraw(user, ethWithdrawn, totalETHDeposits). changeEtherBalance
       // excludes gas by default, isolating the ETH returned to the caller.
-      await expect(aaveDeFi.connect(borrower).withdrawETH(withdrawAmount))
+      // changeEtherBalance cannot be chained after emit — split into two expects.
+      const withdrawTx = aaveDeFi.connect(borrower).withdrawETH(withdrawAmount);
+      await expect(withdrawTx)
         .to.emit(aaveDeFi, "Withdraw")
-        .withArgs(borrower.address, withdrawAmount, oneEth - withdrawAmount)
-        .and.to.changeEtherBalance(borrower, withdrawAmount);
+        .withArgs(borrower.address, withdrawAmount, oneEth - withdrawAmount);
+      await expect(withdrawTx).to.changeEtherBalance(borrower, withdrawAmount);
 
       expect(await aaveDeFi.totalETHDeposits(borrower.address)).to.equal(
         oneEth - withdrawAmount,
